@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.1 - panel and asset library
+
+- reference image card with a live thumbnail, resolution and file size
+- collapsible asset library: every finished job is listed with the preview that
+  the worker renders (384 px, framed on the object only), so a previous result
+  can be reused without running the model again
+- drag a library entry from the hand button straight into the 3D view, or click
+  add to drop it on the 3D cursor; reveal and delete are one click away
+- generation runs still block the inputs, but the panel now shows a progress bar
+  in the same place the results appear
+
 ## 0.4.0 - first public build
 
 Blender add-on

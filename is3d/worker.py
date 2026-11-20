@@ -159,6 +159,81 @@ def _high_material(obj):
         polygon.material_index = 0
 
 
+def _write_thumbnail(obj, output, size=384):
+    """Render a small preview of the finished object for the panel library.
+
+    The worker is a throwaway process, so the camera and lamp created here never
+    reach the user's scene. A failed render only costs the thumbnail.
+    """
+    from mathutils import Vector
+
+    scene = bpy.context.scene
+    corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    if len(corners) != 8:
+        return None
+    center = sum(corners, Vector()) / 8.0
+    radius = max((corner - center).length for corner in corners)
+    if not radius > 0.0:
+        return None
+    created = []
+    # Factory startup still holds the default cube and camera, which would fill the frame.
+    for other in list(bpy.data.objects):
+        if other is not obj:
+            try:
+                bpy.data.objects.remove(other, do_unlink=True)
+            except Exception:  # noqa: BLE001
+                pass
+    scene.camera = None
+    try:
+        direction = Vector((0.62, -1.0, 0.55))
+        rotation = (-direction).to_track_quat("-Z", "Y")
+        camera = bpy.data.cameras.new("IS3D Thumbnail Camera")
+        camera.type = "ORTHO"
+        camera.clip_start = 0.001
+        camera.clip_end = max(10.0, 12.0 * radius)
+        camera_obj = bpy.data.objects.new(camera.name, camera)
+        camera_obj.location = center + direction.normalized() * max(1.0, 3.0 * radius)
+        camera_obj.rotation_euler = rotation.to_euler()
+        scene.collection.objects.link(camera_obj)
+        created.append(camera_obj)
+        projected = [rotation.inverted() @ (corner - center) for corner in corners]
+        camera.ortho_scale = 2.2 * max(max(abs(point.x), abs(point.y)) for point in projected)
+        scene.camera = camera_obj
+        if obj.type == "MESH":
+            light = bpy.data.lights.new("IS3D Thumbnail Sun", "SUN")
+            light.energy = 3.5
+            light_obj = bpy.data.objects.new(light.name, light)
+            light_obj.rotation_euler = (0.85, 0.1, 0.6)
+            scene.collection.objects.link(light_obj)
+            created.append(light_obj)
+        scene.render.engine = "BLENDER_EEVEE"
+        scene.render.resolution_x = scene.render.resolution_y = size
+        scene.render.resolution_percentage = 100
+        world = scene.world or bpy.data.worlds.new("IS3D Thumbnail World")
+        scene.world = world
+        world.use_nodes = True
+        background = world.node_tree.nodes.get("Background")
+        if background is not None:
+            background.inputs[0].default_value = (0.045, 0.047, 0.055, 1.0)
+            background.inputs[1].default_value = 1.0
+        scene.render.film_transparent = False
+        scene.render.image_settings.file_format = "PNG"
+        scene.render.image_settings.color_mode = "RGB"
+        scene.render.filepath = str(output / "thumb.png")
+        bpy.ops.render.render(write_still=True)
+    except Exception:  # noqa: BLE001 - a preview must never fail a job
+        return None
+    finally:
+        scene.camera = None
+        for item in created:
+            try:
+                bpy.data.objects.remove(item, do_unlink=True)
+            except Exception:  # noqa: BLE001
+                pass
+    thumbnail = output / "thumb.png"
+    return thumbnail if thumbnail.is_file() and thumbnail.stat().st_size else None
+
+
 def _export_collection(collection, output):
     destination = output / TRANSFER_FILE
     temporary = output / "asset_transfer.partial.blend"
@@ -218,6 +293,8 @@ def run_job(job, progress):
             previous.objects.unlink(result)
     progress.emit(96, "正在保存可附加的 Blender 资产")
     _export_collection(collection, output)
+    progress.emit(98, "正在渲染缩略图")
+    _write_thumbnail(result, output)
     progress.emit(100, "Blender 资产已生成")
 
 

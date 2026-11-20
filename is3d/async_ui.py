@@ -118,7 +118,7 @@ def displayed_status(scene):
     return scene.is3d_mesh_options
 
 
-def _append_transfer(path, scene, cursor, kind):
+def append_transfer(path, scene, cursor, kind):
     with bpy.data.libraries.load(str(path), link=False) as (contents, selected):
         if TRANSFER_COLLECTION not in contents.collections:
             raise ValueError("后台产物缺少可导入的资产集合")
@@ -157,6 +157,14 @@ def _append_transfer(path, scene, cursor, kind):
     return obj
 
 
+def _refresh_library():
+    # Job folders appear as soon as a run is complete, so the panel list must drop its cache;
+    # the worker writes the thumbnail next to the asset.
+    from . import library
+
+    library.invalidate()
+
+
 def _redraw():
     for window in bpy.context.window_manager.windows:
         for area in window.screen.areas:
@@ -189,10 +197,11 @@ def poll_generation():
                     settings.job_state = "CANCELLED"
                     settings.job_message = "任务已取消"
                 elif kind == "finished":
-                    obj = _append_transfer(event["result_path"], scene, active.cursor, active.kind)
+                    obj = append_transfer(event["result_path"], scene, active.cursor, active.kind)
                     settings.job_progress = 1.0
                     settings.job_state = "FINISHED"
                     settings.job_message = f"已导入 {obj.name}"
+                    _refresh_library()
                 else:
                     settings.job_state = "ERROR"
                     settings.job_message = event.get("message", "后台生成失败，请查看任务日志")
