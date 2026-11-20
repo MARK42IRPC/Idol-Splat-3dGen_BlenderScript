@@ -50,8 +50,8 @@ one reference image
 ## Install
 
 ```powershell
-git clone https://github.com/MARK42IRPC/is3D-BlenderScript
-cd is3D-BlenderScript
+git clone https://github.com/MARK42IRPC/Idol-Splat-3dGen_BlenderScript
+cd Idol-Splat-3dGen_BlenderScript
 powershell -ExecutionPolicy Bypass -File install/install.ps1
 ```
 

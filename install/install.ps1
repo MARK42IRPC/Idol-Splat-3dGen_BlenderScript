@@ -21,7 +21,7 @@ param(
     [string]$BlenderRoot,
     [string]$AddonsDir,
     [string]$Version = "0.4.0",
-    [string]$Repo = "MARK42IRPC/is3D-BlenderScript",
+    [string]$Repo = "MARK42IRPC/Idol-Splat-3dGen_BlenderScript",
     [string]$AssetBaseUrl,
     [string]$FromZip,
     [switch]$Source,
