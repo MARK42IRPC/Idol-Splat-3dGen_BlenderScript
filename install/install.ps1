@@ -21,7 +21,11 @@ param(
     [string]$BlenderRoot,
     [string]$AddonsDir,
     [string]$Version = "0.4.0",
-    [string]$Repo = "MARK42IRPC/is3d",
+    [ValidateSet("github", "hf", "modelscope")]
+    [string]$Mirror = "github",
+    [string]$Repo = "MARK42IRPC/is3D-BlenderScript",
+    [string]$HfRepo = "Mark42IRP/is3D-BlenderScript",
+    [string]$ModelscopeRepo = "Mark42IRPC/is3D-BlenderScript",
     [string]$AssetBaseUrl,
     [string]$FromZip,
     [switch]$Source,
@@ -33,6 +37,18 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
+
+# Every mirror carries byte-identical, checksummed assets; pick whichever is fast.
+$MirrorBases = @{
+    github     = "https://github.com/$Repo/releases/download/v$Version"
+    hf         = "https://hf-mirror.com/$HfRepo/resolve/main"
+    modelscope = "https://www.modelscope.cn/models/$ModelscopeRepo/resolve/master"
+}
+
+function Resolve-AssetBase {
+    if ($AssetBaseUrl) { return $AssetBaseUrl.TrimEnd("/") }
+    return $MirrorBases[$Mirror]
+}
 
 function Step($text) { Write-Host "==> $text" -ForegroundColor Cyan }
 function Note($text) { Write-Host "    $text" -ForegroundColor DarkGray }
@@ -140,6 +156,11 @@ function Test-Hash($file, $expected) {
 # --------------------------------------------------------------------- add-on
 $blender = Find-Blender
 if (-not $blender) { throw "Blender was not found. Pass -BlenderRoot <dir> or -AddonsDir <dir>." }
+if ($blender.Version -lt [version]"1.0") {
+    # Steam installs live in a folder called "Blender", so ask the binary.
+    $first = (& $blender.Exe --version 2>&1 | Select-Object -First 1)
+    if ("$first" -match "(\d+\.\d+)") { $blender.Version = [version]$Matches[1] }
+}
 Step "Blender $($blender.Version) at $($blender.Root)"
 $addons = Get-AddonsDir $blender
 $target = Join-Path $addons "is3d"
@@ -156,7 +177,7 @@ if ($Source) {
     DropDir $target
     Expand-Archive -LiteralPath $FromZip -DestinationPath $addons -Force
 } else {
-    $zipUrl = "https://github.com/$Repo/releases/download/v$Version/is3d-addon-$Version.zip"
+    $zipUrl = (Resolve-AssetBase) + "/is3d-addon-$Version.zip"
     $zip = Join-Path $env:TEMP "is3d-addon-$Version.zip"
     Step "Downloading the add-on"
     Note $zipUrl
@@ -180,9 +201,9 @@ if ($SkipAssets) {
     Step "Model assets already present ($size GB)"
     Note $native
 } else {
-    if (-not $AssetBaseUrl) { $AssetBaseUrl = "https://github.com/$Repo/releases/download/v$Version" }
-    $base = $AssetBaseUrl.TrimEnd("/")
+    $base = Resolve-AssetBase
     Step "Fetching model assets"
+    Note "mirror: $Mirror"
     Note $base
 
     $sumsFile = Join-Path $env:TEMP "is3d-SHA256SUMS.txt"
