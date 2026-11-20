@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import json
 import logging
 from pathlib import Path
-from uuid import uuid4
 
 import bpy
 from bpy.app.handlers import persistent
@@ -65,11 +64,13 @@ def start_generation(scene):
         # folders into the Blender scripts directory.
         fallback = Path(bpy.data.filepath).parent if bpy.data.filepath else Path.home() / "Documents"
         parent = fallback / "IS3D assets"
-    output = parent / f"is3d-{uuid4().hex[:10]}"
-    output.mkdir(parents=True, exist_ok=False)
+    from . import library
+
+    output, title = library.new_job_folder(parent, settings.asset_name)
     config = {
         "image": str(image),
         "output_dir": str(output),
+        "name": title,
         "output_kind": settings.output_kind,
         "high_method": settings.high_method,
         "low_method": settings.low_method,

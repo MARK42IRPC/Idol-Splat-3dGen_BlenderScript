@@ -2,7 +2,7 @@
 
 bl_info = {
     "name": "IS3D",
-    "version": (0, 4, 1),
+    "version": (0, 4, 2),
     "blender": (5, 3, 0),
     "location": "View3D > Sidebar > IS3D",
     "description": "Idol Splat 3D Generator: image to Gaussian splat, textured high and low "
@@ -79,6 +79,10 @@ class IS3D_PG_mesh_options(bpy.types.PropertyGroup):
         name="贴图分辨率",
         items=[(str(n), f"{n} × {n}", "基础色和法线使用相同的方形分辨率") for n in BAKE_RESOLUTIONS],
         default="2048",
+    )
+    asset_name: StringProperty(
+        name="资产名称",
+        description="给这次生成的资产起名；留空则按编号命名（is3d-0001、is3d-0002……）",
     )
     output_directory: StringProperty(name="输出目录", subtype="DIR_PATH")
     show_advanced: BoolProperty(name="高级设置", default=False)
@@ -352,6 +356,11 @@ class IS3D_PT_mesh_pipeline(bpy.types.Panel):
             column.prop(options, "low_method")
             column.prop(options, "triangles")
             column.prop(options, "resolution")
+        column.prop(options, "asset_name")
+        if not options.asset_name.strip():
+            hint = column.row()
+            hint.enabled = False
+            hint.label(text="留空按编号命名，如 is3d-0001", icon="INFO")
         column.prop(options, "output_directory")
         row = column.row()
         row.prop(options, "show_advanced", toggle=True, icon="PREFERENCES")

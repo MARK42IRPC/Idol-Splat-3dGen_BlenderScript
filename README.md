@@ -35,6 +35,9 @@ one reference image
   redistributables. If the machine has an NVIDIA driver, it runs.
 - **Non-blocking UI** -- generation runs in a separate headless Blender process;
   the viewport stays responsive and the job can be cancelled.
+- **Asset library in the panel** -- every finished run keeps a 384 px preview and
+  can be dragged back into any scene. Name a run yourself, or leave the name
+  empty and it is numbered (`is3d-0001`, `is3d-0002`, ...).
 
 ## Requirements
 

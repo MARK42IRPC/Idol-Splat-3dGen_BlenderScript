@@ -79,6 +79,55 @@ def _read_json(path):
         return {}
 
 
+# ------------------------------------------------------------------ job names
+_INVALID_NAME_CHARS = '<>:"/\\|?*'
+_RESERVED_NAMES = {"con", "prn", "aux", "nul",
+                   *(f"com{index}" for index in range(1, 10)),
+                   *(f"lpt{index}" for index in range(1, 10))}
+
+
+def safe_folder_name(name, limit=48):
+    """A Windows-safe job name, or "" when the text holds nothing usable."""
+    text = "".join("_" if character in _INVALID_NAME_CHARS or ord(character) < 32 else character
+                   for character in str(name or ""))
+    text = " ".join(text.split())[:limit].strip(" .")
+    if not text or text.split(".")[0].strip().lower() in _RESERVED_NAMES:
+        return ""
+    return text
+
+
+def _job_folders(root):
+    try:
+        return [path for path in Path(root).iterdir() if (path / "job.json").is_file()]
+    except OSError:
+        return []
+
+
+def new_job_folder(root, name=""):
+    """Create a fresh job folder under ``root`` and return ``(folder, title)``.
+
+    A named run keeps its name (``character``, then ``character-2``...); an unnamed run is
+    numbered after the jobs already in the library (``is3d-0001``, ``is3d-0002``...).
+    """
+    root = Path(root)
+    root.mkdir(parents=True, exist_ok=True)
+    label = safe_folder_name(name)
+    if label:
+        title, attempt = label, 2
+        while (root / title).exists():
+            title = f"{label}-{attempt}"
+            attempt += 1
+        folder = root / title
+    else:
+        index = len(_job_folders(root)) + 1
+        while (root / f"is3d-{index:04d}").exists():
+            index += 1
+        folder = root / f"is3d-{index:04d}"
+        title = folder.name
+    folder.mkdir()
+    return folder, title
+
+
 # ----------------------------------------------------------------- thumbnails
 def _thumbnail_of(source, target, size=256):
     """Downscale any Blender-readable image into a small PNG used by the panel."""
@@ -175,7 +224,7 @@ def _folder_info(folder, cache):
     if kind not in KIND_LABELS or not (folder / TRANSFER_FILE).is_file():
         return None
     image = Path(str(job.get("image") or ""))
-    title = image.stem or folder.name
+    title = str(job.get("name") or "").strip() or image.stem or folder.name
     detail = [KIND_LABELS[kind]]
     if kind == "SPLAT" and job.get("points"):
         detail.append(f"{int(job['points']):,} 点")

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.2 - asset naming
+
+- optional name box: name a run and it lands in `is3d-<name>`, otherwise the job is
+  numbered (`is3d-0001`, `is3d-0002`, ...) so the library never shows random ids
+- the name is written into `job.json`, shown as the library title and used as the
+  object name of the appended asset
+- Windows-unsafe characters are replaced, duplicates get `-2`, `-3`, ...
+
 ## 0.4.1 - panel and asset library
 
 - reference image card with a live thumbnail, resolution and file size

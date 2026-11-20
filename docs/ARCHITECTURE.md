@@ -18,6 +18,18 @@ runs the engine, imports the result with `bpy.ops.wm.ply_import`, optionally
 reconstructs a mesh, and writes the finished object into a transfer `.blend`
 that the UI appends to the current scene at the 3D cursor.
 
+## Job folders
+
+`library.new_job_folder` names the folder before the worker starts, so the library
+never shows random ids:
+
+- a named run keeps its name (`character`, `character-2`, ...); characters that
+  Windows rejects are replaced and reserved device names fall back to numbering
+- an unnamed run is numbered after the jobs already in the library
+  (`is3d-0001`, `is3d-0002`, ...)
+- the title is written into `job.json`, shown by the panel and reused as the
+  object name inside `asset_transfer.blend`
+
 ## Engine stages
 
 | Stage | Kernel work | Resident weights |

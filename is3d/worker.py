@@ -286,6 +286,10 @@ def run_job(job, progress):
             )
             pack_result_images(result)
 
+    title = str(job.get("name") or "").strip()
+    if title and result.name != title:
+        # The object name travels inside the .blend, so the library title is what lands in the scene.
+        result.name = title
     if collection.objects.get(result.name) is None:
         collection.objects.link(result)
     for previous in tuple(result.users_collection):
