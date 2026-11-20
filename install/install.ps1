@@ -21,11 +21,7 @@ param(
     [string]$BlenderRoot,
     [string]$AddonsDir,
     [string]$Version = "0.4.0",
-    [ValidateSet("github", "hf", "modelscope")]
-    [string]$Mirror = "github",
     [string]$Repo = "MARK42IRPC/is3D-BlenderScript",
-    [string]$HfRepo = "Mark42IRP/is3D-BlenderScript",
-    [string]$ModelscopeRepo = "Mark42IRPC/is3D-BlenderScript",
     [string]$AssetBaseUrl,
     [string]$FromZip,
     [switch]$Source,
@@ -38,16 +34,23 @@ param(
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-# Every mirror carries byte-identical, checksummed assets; pick whichever is fast.
-$MirrorBases = @{
-    github     = "https://github.com/$Repo/releases/download/v$Version"
-    hf         = "https://hf-mirror.com/$HfRepo/resolve/main"
-    modelscope = "https://www.modelscope.cn/models/$ModelscopeRepo/resolve/master"
-}
+# The weights this script pulls are an inference-only repack of the upstream
+# models below; rebuilding them from source is described in docs/BUILD.md and
+# docs/ASSETS.md. Nothing is redistributed inside the git repository.
+#
+#   idol (image -> latent -> gaussian anchors, splat decoder)
+#     https://github.com/speridlabs/idol-sdk        https://huggingface.co/speridlabs
+#   FLUX.2 klein VAE (image tokens)
+#     https://github.com/black-forest-labs/flux2   https://huggingface.co/black-forest-labs
+#   DINOv3 ViT-H/16+ (conditioning)
+#     https://github.com/facebookresearch/dinov3   https://huggingface.co/facebook
+#   BiRefNet (background matte)
+#     https://github.com/ZhengPeng7/BiRefNet       https://huggingface.co/ZhengPeng7
+$DefaultAssetBase = "https://github.com/$Repo/releases/download/v$Version"
 
 function Resolve-AssetBase {
     if ($AssetBaseUrl) { return $AssetBaseUrl.TrimEnd("/") }
-    return $MirrorBases[$Mirror]
+    return $DefaultAssetBase
 }
 
 function Step($text) { Write-Host "==> $text" -ForegroundColor Cyan }
@@ -203,7 +206,7 @@ if ($SkipAssets) {
 } else {
     $base = Resolve-AssetBase
     Step "Fetching model assets"
-    Note "mirror: $Mirror"
+    Note ("{0:N0} bytes of weights, repacked from the upstream models listed in NOTICE.md" -f 3537766912)
     Note $base
 
     $sumsFile = Join-Path $env:TEMP "is3d-SHA256SUMS.txt"

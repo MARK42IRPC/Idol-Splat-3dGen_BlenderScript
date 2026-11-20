@@ -45,29 +45,20 @@
 
 ## 安装
 
-三个镜像资源完全相同、都有 SHA-256 校验，哪个快用哪个。
-
 ```powershell
-# GitHub
 git clone https://github.com/MARK42IRPC/is3D-BlenderScript
 cd is3D-BlenderScript
 powershell -ExecutionPolicy Bypass -File install/install.ps1
-
-# Hugging Face（国内走 hf-mirror）
-powershell -ExecutionPolicy Bypass -File install/install.ps1 -Mirror hf
-
-# 魔搭 ModelScope
-powershell -ExecutionPolicy Bypass -File install/install.ps1 -Mirror modelscope
 ```
 
 脚本会自动找到 Blender（Steam 库和官方安装包都支持），把插件装进
-`scripts/addons/is3d`，下载引擎 DLL 和权重分片，逐个校验 SHA-256，再拼回
-`idol_weights.bin`。之后在 `编辑 > 偏好设置 > 插件` 里搜索 **IS3D** 启用。
+`scripts/addons/is3d`，从 GitHub Release 下载引擎 DLL 和权重分片，逐个校验
+SHA-256，再拼回 `idol_weights.bin`。之后在 `编辑 > 偏好设置 > 插件` 里搜索
+**IS3D** 启用。
 
 | 参数 | 作用 |
 | --- | --- |
-| `-Mirror github\|hf\|modelscope` | 资源来源（默认 `github`） |
-| `-AssetBaseUrl <url>` | 自定义镜像，例如内网文件服务器 |
+| `-AssetBaseUrl <url>` | 换一个下载地址（内网共享、自建镜像） |
 | `-BlenderRoot <dir>` | 指定某个 Blender 安装目录 |
 | `-AddonsDir <dir>` | 直接写到指定的 `scripts/addons` 目录 |
 | `-Version 0.4.0` | 安装其它版本 |
@@ -108,16 +99,20 @@ powershell -ExecutionPolicy Bypass -File install/install.ps1 -Mirror modelscope
 | 文件 | 大小 | 说明 |
 | --- | --- | --- |
 | `idol_engine.dll` | 1.2 MB | 原生推理引擎（内嵌 PTX） |
-| `idol_weights.bin` | 3.30 GiB | 全部阶段权重，`IDOLW1` 容器 |
+| `idol_weights.bin` | 3.30 GiB | 全部阶段权重，`IDOLW1` 容器，2349 个张量 |
 
 GitHub 发布附件单个上限 2 GiB，所以权重按 `idol_weights.bin.partNN` 切片发布，
 安装脚本负责拼接和再校验。格式与下载顺序见 `docs/ASSETS.md`。
 
-镜像地址：
+仓库里不放权重。这份权重是对下面几个上游模型的**纯推理重打包**，不想下发布包的
+话可以自己用 `native/engine/pack_weights.py` 重新生成：
 
-- GitHub：<https://github.com/MARK42IRPC/is3D-BlenderScript/releases/tag/v0.4.0>
-- Hugging Face：<https://huggingface.co/Mark42IRP/is3D-BlenderScript>
-- 魔搭 ModelScope：<https://www.modelscope.cn/models/Mark42IRPC/is3D-BlenderScript>
+| 上游模型 | 在流程中的角色 |
+| --- | --- |
+| [speridlabs/idol-sdk](https://github.com/speridlabs/idol-sdk) | 图像 -> latent -> 高斯锚点，splat 解码 |
+| [black-forest-labs/flux2](https://github.com/black-forest-labs/flux2) | FLUX.2 klein VAE 编码器 |
+| [facebookresearch/dinov3](https://github.com/facebookresearch/dinov3) | DINOv3 ViT-H/16+ 条件特征 |
+| [ZhengPeng7/BiRefNet](https://github.com/ZhengPeng7/BiRefNet) | 抠图 |
 
 ## 从源码构建
 

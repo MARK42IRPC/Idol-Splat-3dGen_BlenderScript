@@ -51,22 +51,30 @@ python tools/make_release_assets.py            # -> dist/release/*
 ```
 
 That writes `idol_engine.dll`, `idol_weights.bin.partNN`, `is3d-addon-<ver>.zip`,
-`SHA256SUMS.txt` and `manifest.json`.
-
-Publish to GitHub:
+`SHA256SUMS.txt` and `manifest.json`. Publish them to a release:
 
 ```powershell
 gh release create v0.4.0 dist/release/* --title "IS3D 0.4.0" --notes "First public build"
 ```
 
-Publish the same set to the Hugging Face and ModelScope mirrors:
+`install/install.ps1` downloads that set, concatenates the parts and checks every
+SHA-256 against `SHA256SUMS.txt`. Any other host (LAN share, object storage,
+another forge) works too -- pass `-AssetBaseUrl` and keep the same flat file
+names.
 
-```powershell
-python tools/upload_mirrors.py --hf-token $env:HF_TOKEN --modelscope-token $env:MS_TOKEN
-```
+## Upstream checkpoints
 
-`install/install.ps1` downloads that set from whichever mirror you pick,
-concatenates the parts and checks every SHA-256 against `SHA256SUMS.txt`.
+`pack_weights.py` reads the original checkpoints, which are **not** vendored
+here. Fetch them from the projects that publish them:
+
+| Upstream | Where | Needed for |
+| --- | --- | --- |
+| `idol` SDK | <https://github.com/speridlabs/idol-sdk> | denoiser / decoder tensors |
+| FLUX.2 klein 4B | <https://github.com/black-forest-labs/flux2> | VAE encoder |
+| DINOv3 ViT-H/16+ | <https://github.com/facebookresearch/dinov3> | conditioning |
+| BiRefNet | <https://github.com/ZhengPeng7/BiRefNet> | background matte |
+
+Honour each project's licence when you rebuild or redistribute.
 
 ## Add-on zip
 

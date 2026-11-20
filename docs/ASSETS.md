@@ -26,18 +26,22 @@ tensor_count * {
 Weights are memory-mapped from the file and uploaded to the GPU stage by stage,
 so the file can live on a slow disk without hurting steady-state speed.
 
-## Mirrors
+## Upstream sources
 
-All three carry byte-identical files and the same `SHA256SUMS.txt`:
+The release is a repack, not the original distribution. Everything in
+`idol_weights.bin` comes from these projects; the packer keeps only what the
+inference path touches and re-lays-out the weights for the kernels.
 
-| `-Mirror` | Base URL |
-| --- | --- |
-| `github` (default) | `https://github.com/MARK42IRPC/is3D-BlenderScript/releases/download/v<version>` |
-| `hf` | `https://hf-mirror.com/Mark42IRP/is3D-BlenderScript/resolve/main` |
-| `modelscope` | `https://www.modelscope.cn/models/Mark42IRPC/is3D-BlenderScript/resolve/master` |
+| Upstream | Licence-holder | What we take |
+| --- | --- | --- |
+| [speridlabs/idol-sdk](https://github.com/speridlabs/idol-sdk) | speridlabs | denoiser, VAE decoder, Gaussian decoder |
+| [black-forest-labs/flux2](https://github.com/black-forest-labs/flux2) | Black Forest Labs | FLUX.2 klein 4B VAE encoder |
+| [facebookresearch/dinov3](https://github.com/facebookresearch/dinov3) | Meta | DINOv3 ViT-H/16+ |
+| [ZhengPeng7/BiRefNet](https://github.com/ZhengPeng7/BiRefNet) | Peng Zheng et al. | matte network (Swin-L + deformable ASPP) |
 
-`-AssetBaseUrl <url>` overrides all of them (an internal file server, MinIO, a
-`python -m http.server` on a LAN share, ...).
+Hugging Face mirrors of the same upstreams: `huggingface.co/speridlabs`,
+`huggingface.co/black-forest-labs`, `huggingface.co/facebook`,
+`huggingface.co/ZhengPeng7`.
 
 ## Where the installer looks
 

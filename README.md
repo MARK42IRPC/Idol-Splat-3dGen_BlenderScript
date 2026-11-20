@@ -49,30 +49,20 @@ one reference image
 
 ## Install
 
-Pick the mirror you can reach; all three carry identical, checksummed assets.
-
 ```powershell
-# GitHub
 git clone https://github.com/MARK42IRPC/is3D-BlenderScript
 cd is3D-BlenderScript
 powershell -ExecutionPolicy Bypass -File install/install.ps1
-
-# Hugging Face (hf-mirror for mainland China)
-powershell -ExecutionPolicy Bypass -File install/install.ps1 -Mirror hf
-
-# ModelScope (魔搭)
-powershell -ExecutionPolicy Bypass -File install/install.ps1 -Mirror modelscope
 ```
 
 The script finds Blender (Steam libraries and the official installer are both
 handled), drops the add-on into `scripts/addons/is3d`, downloads the engine DLL
-and the weight slices, checks every SHA-256, and rebuilds `idol_weights.bin`.
-Then enable **IS3D** in `Edit > Preferences > Add-ons`.
+and the weight slices from the GitHub release, checks every SHA-256, and rebuilds
+`idol_weights.bin`. Then enable **IS3D** in `Edit > Preferences > Add-ons`.
 
 | Switch | Meaning |
 | --- | --- |
-| `-Mirror github\|hf\|modelscope` | where the assets come from (default `github`) |
-| `-AssetBaseUrl <url>` | use any other mirror, e.g. an internal file server |
+| `-AssetBaseUrl <url>` | pull the assets from somewhere else (LAN share, internal mirror) |
 | `-BlenderRoot <dir>` | point at a specific Blender install |
 | `-AddonsDir <dir>` | write straight into a `scripts/addons` directory |
 | `-Version 0.4.0` | install a different release |
@@ -117,17 +107,22 @@ stage's weights from VRAM as soon as it finishes.
 | File | Size | Purpose |
 | --- | --- | --- |
 | `idol_engine.dll` | 1.2 MB | native inference engine (PTX embedded) |
-| `idol_weights.bin` | 3.30 GiB | all stage weights, `IDOLW1` container |
+| `idol_weights.bin` | 3.30 GiB | all stage weights, `IDOLW1` container, 2349 tensors |
 
 Because GitHub caps release assets at 2 GiB, the weight file ships as
 `idol_weights.bin.partNN` slices; the installer concatenates and re-verifies
 them. Format and download order: `docs/ASSETS.md`.
 
-Mirrors:
+Nothing is stored in the git repository. The weights are an inference-only
+repack of these upstream models -- rebuild them yourself with
+`native/engine/pack_weights.py` if you would rather not download the release:
 
-- GitHub: <https://github.com/MARK42IRPC/is3D-BlenderScript/releases/tag/v0.4.0>
-- Hugging Face: <https://huggingface.co/Mark42IRP/is3D-BlenderScript>
-- ModelScope: <https://www.modelscope.cn/models/Mark42IRPC/is3D-BlenderScript>
+| Upstream | Role in the pipeline |
+| --- | --- |
+| [speridlabs/idol-sdk](https://github.com/speridlabs/idol-sdk) | image -> latent -> Gaussian anchors, splat decoder |
+| [black-forest-labs/flux2](https://github.com/black-forest-labs/flux2) | FLUX.2 klein VAE encoder |
+| [facebookresearch/dinov3](https://github.com/facebookresearch/dinov3) | DINOv3 ViT-H/16+ conditioning |
+| [ZhengPeng7/BiRefNet](https://github.com/ZhengPeng7/BiRefNet) | background removal |
 
 ## Build from source
 
