@@ -1,0 +1,58 @@
+# Model assets, pulled by install/install.ps1 (never committed: several GiB)
+is3d/native/
+dist/
+models/
+.reference/
+
+# Build products
+native/engine/build/
+*.obj
+*.lib
+*.exp
+*.pdb
+*.ilk
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Validation artefacts (dumps, logs, renders)
+validation/results/
+validation/_*
+validation/probe/
+validation/dendump/
+validation/dinodump/
+validation/vaedump/
+*.log
+*.f32
+*.npy
+*.npz
+*.ply
+*.bin
+
+# Legacy / generated native artifacts
+native/build/
+native/engine/*.bat
+
+# Local exploration scripts and comparison images
+validation/test_*.py
+validation/cmp_*.py
+validation/dump_*.py
+validation/probe_*.py
+validation/bench_flash.py
+validation/bench_gemm_cmp.py
+validation/bench_kernels.py
+validation/check_gs.py
+validation/check_octree.py
+validation/check_pipeline.py
+validation/check_prep.py
+validation/check_sample.py
+validation/check_vae.py
+validation/dino_fp32.py
+validation/dino_stats.py
+validation/vae_prec.py
+validation/staged_reference.py
+validation/run_reference.py
+validation/fix.py
+validation/peek.py
+validation/*.png
